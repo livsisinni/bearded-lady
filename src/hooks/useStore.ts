@@ -11,7 +11,7 @@ import {
   dbSetVote, dbRemoveVote,
   dbImportProject,
   dbGetMemberships, dbInviteMember, dbRemoveMember,
-  dbEnsureProfile,
+  dbEnsureProfile, dbAcceptPendingInvites,
 } from '../lib/queries';
 
 function initialState(): AppState {
@@ -41,6 +41,7 @@ export function useStore(): {
 
     async function loadForUser(userId: string, email: string) {
       await dbEnsureProfile(userId, email);
+      await dbAcceptPendingInvites();
       const projects = await dbListProjectsInit();
       if (!mounted) return;
       setSt((s) => ({ ...s, projects, currentUserId: userId }));

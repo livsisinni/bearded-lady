@@ -177,6 +177,10 @@ export async function dbImportProject(src: Project): Promise<Project> {
 
 // ─── PROFILES ────────────────────────────────────────────────
 
+export async function dbAcceptPendingInvites(): Promise<void> {
+  await supabase.rpc('accept_pending_invites');
+}
+
 export async function dbEnsureProfile(userId: string, email: string): Promise<void> {
   const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
   await supabase.from('profiles').upsert(
