@@ -195,14 +195,19 @@ export async function dbUpdateProfile(userId: string, data: { name: string }): P
 export async function dbGetMemberships(projectId: string): Promise<Membership[]> {
   const rows = throwOnError(await supabase
     .from('memberships')
-    .select('user_id, role, profiles!inner(id, email, name, avatar_color)')
+    .select('user_id, role, profiles(id, email, name, avatar_color)')
     .eq('project_id', projectId));
   // reason: any — Supabase nested select returns opaque shape
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (rows as any[]).map((r: any): Membership => ({
     userId: r.user_id,
     role: r.role as MemberRole,
-    profile: { id: r.profiles.id, email: r.profiles.email, name: r.profiles.name, avatarColor: r.profiles.avatar_color },
+    profile: {
+      id: r.profiles?.id ?? r.user_id,
+      email: r.profiles?.email ?? '',
+      name: r.profiles?.name ?? '',
+      avatarColor: r.profiles?.avatar_color ?? 'oklch(0.62 0.13 250)',
+    },
   }));
 }
 

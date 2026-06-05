@@ -24,6 +24,7 @@ export function Canvas({ project, actions, users, currentUserId, currentUserRole
   const scenes = project.scenes;
 
   const [view, setView] = useState<ViewState>({ x: 24, y: 16, z: 1 });
+  const [vaOpen, setVaOpen] = useState(false);
   const viewRef = useRef(view);
   viewRef.current = view;
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -128,10 +129,12 @@ export function Canvas({ project, actions, users, currentUserId, currentUserRole
           currentUserId={currentUserId}
           currentUserRole={currentUserRole}
           actions={actions}
+          open={vaOpen}
+          onOpenChange={setVaOpen}
         />
 
-        <button className="btn ghost-tb" onClick={() => actions.exportProject(project.id)} title="Download this project to share">
-          <Icon name="share" size={15} /> Share
+        <button className="btn ghost-tb" onClick={() => setVaOpen(true)} title="Manage team and invite members">
+          <Icon name="user" size={15} /> Invite
         </button>
 
         <div className="tb-divider" />

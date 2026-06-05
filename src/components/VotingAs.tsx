@@ -8,6 +8,8 @@ interface VotingAsProps {
   currentUserId: string;
   currentUserRole: MemberRole | null;
   actions: Actions;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
 }
 
 const ROLE_LABEL: Record<MemberRole, string> = {
@@ -16,8 +18,7 @@ const ROLE_LABEL: Record<MemberRole, string> = {
   viewer: 'Viewer',
 };
 
-export function VotingAs({ members, currentUserId, currentUserRole, actions }: VotingAsProps) {
-  const [open, setOpen] = useState(false);
+export function VotingAs({ members, currentUserId, currentUserRole, actions, open, onOpenChange }: VotingAsProps) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
   const [inviting, setInviting] = useState(false);
@@ -43,7 +44,7 @@ export function VotingAs({ members, currentUserId, currentUserRole, actions }: V
 
   return (
     <div className="voting-as">
-      <button className="va-trigger" onClick={() => setOpen((o) => !o)} title="Team members">
+      <button className="va-trigger" onClick={() => onOpenChange(!open)} title="Team members">
         {meUser && <Avatar user={meUser} size={22} />}
         <span className="va-name">{meUser?.name ?? '—'}</span>
         <Icon name="chev" size={14} />
@@ -51,7 +52,7 @@ export function VotingAs({ members, currentUserId, currentUserRole, actions }: V
 
       {open && (
         <>
-          <div className="scrim" onMouseDown={() => setOpen(false)} />
+          <div className="scrim" onMouseDown={() => onOpenChange(false)} />
           <div className="va-menu">
             <div className="va-head">Team</div>
 
@@ -107,7 +108,7 @@ export function VotingAs({ members, currentUserId, currentUserRole, actions }: V
             )}
 
             <div className="va-sep" />
-            <button className="va-signout" onClick={() => { actions.signOut(); setOpen(false); }}>
+            <button className="va-signout" onClick={() => { actions.signOut(); onOpenChange(false); }}>
               Sign out
             </button>
           </div>
