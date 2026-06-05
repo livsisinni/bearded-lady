@@ -2,9 +2,11 @@ import { useRef, useState, useEffect } from 'react';
 import type { Actions, Membership, MemberRole, Project, User } from '../lib/types';
 import { THEMES } from '../lib/store';
 import { Icon } from '../components/Icon';
+import { Avatar } from '../components/Avatar';
 import { Editable } from '../components/Editable';
 import { SceneCard } from '../components/SceneCard';
 import { VotingAs } from '../components/VotingAs';
+import { useProjectPresence } from '../hooks/useProjectPresence';
 
 interface CanvasProps {
   project: Project;
@@ -25,6 +27,11 @@ export function Canvas({ project, actions, users, currentUserId, currentUserRole
 
   const [view, setView] = useState<ViewState>({ x: 24, y: 16, z: 1 });
   const [vaOpen, setVaOpen] = useState(false);
+
+  const me = memberships.find((m) => m.userId === currentUserId);
+  const myName = me?.profile.name || me?.profile.email.split('@')[0] || '';
+  const myColor = me?.profile.avatarColor || '';
+  const presentUsers = useProjectPresence(project.id, currentUserId, myName, myColor);
   const viewRef = useRef(view);
   viewRef.current = view;
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -123,6 +130,17 @@ export function Canvas({ project, actions, users, currentUserId, currentUserRole
         </div>
 
         <div className="tb-spacer" />
+
+        {presentUsers.length > 0 && (
+          <div className="presence-stack" title={presentUsers.map((u) => u.name || 'Someone').join(', ') + ' also here'}>
+            {presentUsers.slice(0, 4).map((u) => (
+              <Avatar key={u.userId} user={{ id: u.userId, name: u.name, color: u.color }} size={26} />
+            ))}
+            {presentUsers.length > 4 && (
+              <span className="presence-more">+{presentUsers.length - 4}</span>
+            )}
+          </div>
+        )}
 
         <VotingAs
           members={memberships}

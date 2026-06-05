@@ -181,6 +181,21 @@ body {
 /* ============================================================
    VOTING-AS
    ============================================================ */
+/* ── Presence avatars ──────────────────────────────────────── */
+.presence-stack {
+  display: flex; align-items: center; flex-shrink: 0;
+  margin-right: 4px;
+}
+.presence-stack > * { margin-left: -6px; }
+.presence-stack > *:first-child { margin-left: 0; }
+.presence-more {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  background: var(--panel-2); color: var(--ink-soft);
+  border: 2px solid var(--panel); margin-left: -6px;
+}
+
 .voting-as { position: relative; flex-shrink: 0; }
 .va-trigger {
   display: inline-flex; align-items: center; gap: 8px;

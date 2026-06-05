@@ -72,7 +72,7 @@ export function useStore(): {
   }, []);
 
   // ── realtime sync ────────────────────────────────────────────
-  useProjectRealtime(st.activeId, setSt);
+  useProjectRealtime(st.activeId, st.currentUserId, setSt);
 
   // ── load memberships when active project changes ─────────────
   useEffect(() => {

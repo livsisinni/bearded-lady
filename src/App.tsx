@@ -32,7 +32,7 @@ export default function App() {
       currentUserId={st.currentUserId}
       currentUserRole={st.currentUserRole}
       memberships={memberships}
-      canEdit={st.currentUserRole !== 'viewer'}
+      canEdit={st.currentUserRole === 'owner' || st.currentUserRole === 'editor'}
       theme={theme}
       setTheme={setTheme}
     />

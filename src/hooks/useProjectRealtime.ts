@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { AppState, Option, Scene, SceneElement } from '../lib/types';
 import { supabase } from '../lib/supabase';
+import { dbLoadProjectTree } from '../lib/queries';
 
 type SetSt = React.Dispatch<React.SetStateAction<AppState>>;
 
@@ -8,10 +9,11 @@ type SetSt = React.Dispatch<React.SetStateAction<AppState>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = any;
 
-export function useProjectRealtime(activeId: string | null, setSt: SetSt): void {
+export function useProjectRealtime(activeId: string | null, currentUserId: string, setSt: SetSt): void {
   useEffect(() => {
     if (!activeId) return;
 
+    let firstConnect = true;
     const channel = supabase.channel(`project:${activeId}`)
 
       // ── scenes ──────────────────────────────────────────────
@@ -282,8 +284,44 @@ export function useProjectRealtime(activeId: string | null, setSt: SetSt): void 
         });
       })
 
-      .subscribe();
+      // ── membership removal ──────────────────────────────────
+      // Best-effort: Supabase may not deliver this if RLS blocks the
+      // deleted row. The reconnect refetch below covers the gap.
+      .on('postgres_changes', {
+        event: 'DELETE', schema: 'public', table: 'memberships',
+        filter: `project_id=eq.${activeId}`,
+      }, ({ old: row }: { new: Row; old: Row }) => {
+        if (row.user_id !== currentUserId) return;
+        setSt((s) => ({
+          ...s,
+          projects: s.projects.filter((p) => p.id !== activeId),
+          activeId: null,
+        }));
+      })
+
+      .subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED') return;
+        if (!firstConnect) {
+          // Reconnect after a network drop: refetch the full project to
+          // catch any events missed while offline. If access was revoked
+          // (project deleted or membership removed), go home instead.
+          try {
+            const fresh = await dbLoadProjectTree(activeId);
+            setSt((s) => ({
+              ...s,
+              projects: s.projects.map((p) => p.id === activeId ? fresh : p),
+            }));
+          } catch {
+            setSt((s) => ({
+              ...s,
+              projects: s.projects.filter((p) => p.id !== activeId),
+              activeId: null,
+            }));
+          }
+        }
+        firstConnect = false;
+      });
 
     return () => { supabase.removeChannel(channel); };
-  }, [activeId, setSt]);
+  }, [activeId, currentUserId, setSt]);
 }

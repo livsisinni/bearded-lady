@@ -28,5 +28,19 @@ Policies on `memberships` can't reference `memberships` directly — it creates 
 ### `currentUserRole` in AppState
 Added so Canvas and its children know the local user's permission level without re-fetching. Populated from `dbGetMemberships` whenever `activeId` changes. Null when no project is open.
 
+### `canEdit` requires explicit role
+Changed from `role !== 'viewer'` to `role === 'owner' || role === 'editor'`. The old form would return `true` when role is `null` (not yet loaded or access revoked), incorrectly enabling edit controls. The new form is deny-by-default.
+
+## Phase 4
+
+### Presence via Supabase Presence channel
+Each open-project client tracks `{ userId, name, color }` on a `presence:${projectId}` channel. Other users' avatars appear in the toolbar. Deduplication handles multiple tabs from the same account. No server-side storage needed.
+
+### Reconnect refetch for missed events
+`useProjectRealtime` tracks whether the channel's first `SUBSCRIBED` event has fired. On every subsequent `SUBSCRIBED` (reconnect after network drop), it calls `dbLoadProjectTree` to replace local state with the ground truth. If the fetch throws (project deleted or membership removed), it clears `activeId` and sends the user home.
+
+### Membership DELETE is best-effort
+Supabase Realtime checks RLS when deciding whether to deliver a `postgres_changes` event. A DELETE on the current user's own membership row means `is_member()` immediately returns false, so Supabase may not send the event. The subscription is still registered as a fast path when it does arrive; the reconnect refetch above covers the case when it doesn't.
+
 ### Viewer read-only propagation
 `canEdit = role !== 'viewer'` flows as a prop: App → Canvas → SceneCard → ElementRow → OptionCard. Editable got a `readOnly` prop (renders a plain `<div>` instead of `contentEditable`). Vote buttons always active — viewers can vote.
