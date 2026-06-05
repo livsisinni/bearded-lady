@@ -11,6 +11,7 @@ import {
   dbSetVote, dbRemoveVote,
   dbImportProject,
   dbGetMemberships, dbInviteMember, dbRemoveMember,
+  dbEnsureProfile,
 } from '../lib/queries';
 
 function initialState(): AppState {
@@ -38,7 +39,8 @@ export function useStore(): {
   useEffect(() => {
     let mounted = true;
 
-    async function loadForUser(userId: string) {
+    async function loadForUser(userId: string, email: string) {
+      await dbEnsureProfile(userId, email);
       const projects = await dbListProjectsInit();
       if (!mounted) return;
       setSt((s) => ({ ...s, projects, currentUserId: userId }));
@@ -48,7 +50,7 @@ export function useStore(): {
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
-      if (session) loadForUser(session.user.id).catch(console.error);
+      if (session) loadForUser(session.user.id, session.user.email ?? '').catch(console.error);
       else setLoading(false);
     });
 
@@ -57,7 +59,7 @@ export function useStore(): {
       if (!mounted) return;
       if (event === 'SIGNED_IN' && session) {
         setLoading(true);
-        loadForUser(session.user.id).catch(console.error);
+        loadForUser(session.user.id, session.user.email ?? '').catch(console.error);
       } else if (event === 'SIGNED_OUT') {
         setSt(initialState());
         setMemberships([]);

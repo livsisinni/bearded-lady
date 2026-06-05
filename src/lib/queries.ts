@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import type { Membership, MemberRole, Profile, Project, Scene, SceneElement, Option, VoteDirection } from './types';
-import { uid } from './store';
+import { uid, AVATAR_COLORS } from './store';
 
 // ─── HELPERS ──────────────────────────────────────────────────
 
@@ -176,6 +176,14 @@ export async function dbImportProject(src: Project): Promise<Project> {
 }
 
 // ─── PROFILES ────────────────────────────────────────────────
+
+export async function dbEnsureProfile(userId: string, email: string): Promise<void> {
+  const avatarColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+  await supabase.from('profiles').upsert(
+    { id: userId, email, name: '', avatar_color: avatarColor },
+    { onConflict: 'id', ignoreDuplicates: true },
+  );
+}
 
 export async function dbGetProfile(userId: string): Promise<Profile | null> {
   const result = await supabase.from('profiles').select('*').eq('id', userId).single();
